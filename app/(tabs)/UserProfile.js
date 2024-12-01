@@ -18,9 +18,7 @@ function UserProfile({ navigation }) {
     return (
         <View style={styles.container}>
             <Text style={styles.header}>Thông tin cá nhân</Text>
-                <View style={{ flexDirection: 'row' }}>
-                <Image source={{ uri: image }} style={{ with: 100, height: 100 }} />
-                </View>    
+            <Image source={{ uri: image }} style={{ height: 100 }} />     
                 <View style={{flexDirection:'row'}}>
                     <Text style={styles.label}>Tên: </Text>
                     <Text style={styles.txtInfo}>{name}</Text>

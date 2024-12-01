@@ -13,7 +13,7 @@ const FoodDetail = ({ route }) => {
     const { cartItems, setCartItems } = useCart();
 
     const addToCart = (item) => {
-        alert("Sản phẩm thêm vào: " + id); // Dùng alert để hiển thị sản phẩm
+        alert("Sản phẩm thêm vào: " + id); 
 
         setCartItems((prevItems) => {
             const existingItem = prevItems.find((cartItem) => cartItem.id === item.id);

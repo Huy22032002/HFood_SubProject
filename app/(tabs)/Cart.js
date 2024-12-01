@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-
+import React, { useState } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { useUser } from './UserContext';
 import { useCart } from './CartContext';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 function Cart({ navigation }) {
-    const { cartItems, updateCartItem, removeFromCart } = useCart(); 
+    const [address, setAddress] = useState('');
+    const { cartItems, updateCartItem, removeFromCart } = useCart(''); 
 
     const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -22,6 +23,11 @@ function Cart({ navigation }) {
     const handleRemoveItem = (item) => {
         removeFromCart(item.id);
     };
+
+    const { user } = useUser();
+    const username = user?.name || "";
+    const phone = user?.phone || "";
+    const userAddress = user?.address || "";
 
     const renderItem = ({ item }) => (
         <View style={styles.itemFlatList}>
@@ -44,7 +50,12 @@ function Cart({ navigation }) {
             </View>
         </View>
     );
+    const deliveryAddress = address.trim() !== '' ? address : userAddress;
     const handlePurchase = async () => {
+        if (cartItems.length === 0) {
+            alert('Giỏ hàng của bạn không có sản phẩm. Vui lòng thêm sản phẩm vào giỏ hàng!');
+            return;
+        }
         const order = {
             createAt: new Date().toISOString(),
             list_products: cartItems.map((item) => ({
@@ -54,14 +65,18 @@ function Cart({ navigation }) {
             })),
             total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
             status: true,
-            user_id: `/User/user1`,
+            user_id: user.userId,
+            address: deliveryAddress
         };
 
         try {
-            // Lưu đơn hàng vào bộ sưu tập 'orders' trong Firestore
             const docRef = await addDoc(collection(db, 'order'), order);
             console.log('Order saved successfully with ID:', docRef.id);
             alert('Đặt hàng thành công!');
+
+            navigation.navigate('OrderStatus', { orderId: docRef.id });
+            
+            clearCart(); //lam sach gio hang
         } catch (error) {
             console.error('Error saving order:', error.message);
             alert('Đặt hàng thất bại!');
@@ -69,10 +84,17 @@ function Cart({ navigation }) {
     };
     return (
         <View style={styles.container}>
-            <Text>Customer: </Text>
-            <Text>Phone: </Text>
-            <Text>Address: </Text>
-
+            <Text>Khách hàng: {username}</Text>
+            <Text>Số điện thoại: {phone}</Text>
+            <Text>Địa chỉ hiện tại: {userAddress}</Text>
+            
+            <Text>Hoặc nhập địa chỉ khác mà bạn muốn giao đơn hàng này: </Text>
+            <TextInput 
+                value={address} 
+                onChangeText={setAddress} 
+                style={{ width: '90%', height: 30, borderWidth:1, borderRadius:10, marginTop:10}}
+            />
+               
             <FlatList
                 data={cartItems}
                 renderItem={renderItem}

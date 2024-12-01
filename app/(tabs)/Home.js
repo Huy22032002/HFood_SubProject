@@ -12,21 +12,19 @@ const Home = ({ navigation }) => {
 
     const fetchCategories = async () => {
         try {
-            // Lấy tất cả các tài liệu trong bộ sưu tập "Categories"
             const querySnapshot = await getDocs(collection(db, "Categories"));
 
             const categoriesData = querySnapshot.docs.map((doc) => {
-                // Lấy dữ liệu từ mỗi tài liệu
                 const data = doc.data();
                 return {
-                    id: doc.id,  // Lấy ID của tài liệu
+                    id: doc.id,  
                     image: data.image,
                     name: data.name,
                 };
             });
 
             console.log("Fetched Categories: ", categoriesData);
-            setCategories(categoriesData);  // Lưu vào state
+            setCategories(categoriesData);  
         } catch (error) {
             console.error("Error fetching categories: ", error);
         }
@@ -85,21 +83,34 @@ const Home = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {/* Header and Modal */}
             <View style={styles.headerUser}>
+                {user?.role === 'admin' && (
+                    <>
+                        <TouchableOpacity
+                            style={{ marginRight: 15 }}
+                            onPress={() => navigation.navigate('AddFood')}
+                        >
+                            <Image
+                                source={require('../../assets/images/addFood.png')}
+                                style={styles.icon}
+                            />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={{ marginRight: 15 }}
+                            onPress={() => navigation.navigate('AddCategory')}
+                        >
+                            <Image
+                                source={require('../../assets/images/category.jpg')}
+                                style={styles.icon}
+                            />
+                        </TouchableOpacity>
+                    </>
+                )}
                 <TouchableOpacity
                     style={{ marginRight: 15 }}
-                    onPress={() => navigation.navigate('AddFood')}>
+                    onPress={() => navigation.navigate('Order')}>
                     <Image
-                        source={require('../../assets/images/addFood.png')}
-                        style={styles.icon}
-                    />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={{ marginRight: 15 }}
-                    onPress={() => navigation.navigate('AddCategory')}>
-                    <Image
-                        source={require('../../assets/images/category.jpg')}
+                        source={require('../../assets/images/transaction-history.png')}
                         style={styles.icon}
                     />
                 </TouchableOpacity>

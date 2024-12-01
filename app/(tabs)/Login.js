@@ -3,7 +3,6 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig'; 
 import { useUser } from './UserContext';
-
 function Login({ navigation }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -24,10 +23,10 @@ function Login({ navigation }) {
 
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
-
-                // Kiểm tra mật khẩu
+                userData.userId = userDocSnap.id;
                 if (userData.password === password) {
                     login(userData);
+                    alert(userData.userId)
                     navigation.navigate('Home');  
                 } else {
                     alert('Lỗi', 'Mật khẩu không đúng');
