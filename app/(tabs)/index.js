@@ -10,13 +10,13 @@ import Cart from './Cart';
 import FoodDetail from './FoodDetail';
 import AddCategory from './AddCategory';
 import AddFood from './AddFood';
-import { CartProvider } from './CartContext';
+import AppProvider from './AppProvider';
 const Stack = createNativeStackNavigator();
 
 function Index() {
   return (
     //<NavigationContainer>
-    <CartProvider>
+    <AppProvider>
       <Stack.Navigator>
         <Stack.Screen name="Home" component={Home}/>
         <Stack.Screen name="Login" component={LoginScreen}/>
@@ -28,7 +28,7 @@ function Index() {
         <Stack.Screen name="AddCategory" component={AddCategory} />
         <Stack.Screen name='AddFood' component={AddFood}/>
       </Stack.Navigator>
-    </CartProvider>
+    </AppProvider>
     //</NavigationContainer>
   );
 }

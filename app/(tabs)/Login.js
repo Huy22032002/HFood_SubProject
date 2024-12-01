@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig'; 
+import { useUser } from './UserContext';
 
 function Login({ navigation }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const { login } = useUser();
 
     const handleLogin = async () => {
         if (!username || !password) {
@@ -17,8 +19,7 @@ function Login({ navigation }) {
         setLoading(true);
 
         try {
-            // Lấy thông tin người dùng từ Firestore
-            const userRef = doc(db, 'User', username); // Giả sử 'User' là collection chứa thông tin người dùng, và 'username' là document ID
+            const userRef = doc(db, 'User', username); 
             const userDocSnap = await getDoc(userRef);
 
             if (userDocSnap.exists()) {
@@ -26,8 +27,8 @@ function Login({ navigation }) {
 
                 // Kiểm tra mật khẩu
                 if (userData.password === password) {
-                    // Đăng nhập thành công, chuyển hướng đến màn hình Home
-                    navigation.navigate('Home', {id: username});
+                    login(userData);
+                    navigation.navigate('Home');  
                 } else {
                     alert('Lỗi', 'Mật khẩu không đúng');
                 }

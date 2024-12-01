@@ -10,14 +10,13 @@ const AddCategory = () => {
 
     const handleAddCategory = async () => {
         if (!name || !image) {
-            Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ tên và URL hình ảnh');
+            alert('Lỗi', 'Vui lòng nhập đầy đủ tên và URL hình ảnh');
             return;
         }
 
         setLoading(true);
 
         try {
-            // Tạo document mới trong collection 'Category'
             await addDoc(collection(db, 'Categories'), {
                 name: name,
                 image: image, 

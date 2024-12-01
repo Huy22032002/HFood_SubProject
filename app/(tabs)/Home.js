@@ -3,13 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, TextInput, Image } from 'react-native';
 import { db } from '../../config/firebaseConfig'; 
 import { getFirestore, getDocs, collection } from "firebase/firestore";
+import { useUser } from './UserContext';
 
-
-const Home = ({ route, navigation }) => {
-    // Fetch Categories
+const Home = ({ navigation }) => {
     const [categories, setCategories] = useState([]);
-    //fetch Products
     const [foods, setFoods] = useState([]);
+    const { user } = useUser();
 
     const fetchCategories = async () => {
         try {
@@ -82,6 +81,8 @@ const Home = ({ route, navigation }) => {
         </TouchableOpacity>
     );
 
+    const userImage = user?.image || require('../../assets/images/logo.png');
+
     return (
         <View style={styles.container}>
             {/* Header and Modal */}
@@ -112,7 +113,7 @@ const Home = ({ route, navigation }) => {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={activePopUp}>
                     <Image
-                        source={require('../../assets/images/logo.png')}
+                        source={userImage}
                         style={styles.icon}
                     />
                 </TouchableOpacity>
