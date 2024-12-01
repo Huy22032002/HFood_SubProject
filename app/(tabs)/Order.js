@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { db } from '../../config/firebaseConfig'; 
+import { db } from '../../config/firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useUser } from './UserContext';
 
@@ -13,7 +13,7 @@ function Order({ navigation }) {
             try {
                 const q = query(
                     collection(db, 'order'),
-                    where('user_id', '==', user.userId) 
+                    where('user_id', '==', user.userId)
                 );
                 const querySnapshot = await getDocs(q);
                 const ordersData = querySnapshot.docs.map(doc => ({
@@ -25,21 +25,23 @@ function Order({ navigation }) {
                 console.error("Error getting orders: ", error);
             }
         };
+        
         fetchOrders();
     }, []);
 
     const renderItem = ({ item }) => (
         <View style={styles.orderItem}>
-            <Text style={styles.orderText}>#{item.id}</Text>
-            <Text style={styles.orderText}>Số lượng: {item.list_products.reduce((sum, product) => sum + product.quantity, 0)}</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Mã đơn: #{item.id}</Text>
+            <Text style={styles.orderText}>Ngày đặt: #{item.createAt}</Text>
             <Text style={styles.orderText}>Tổng tiền: {item.total} đ</Text>
-            <Text style={styles.orderText}>Trạng thái thanh toán: {item.status ? 'Đã thanh toán' : 'Chưa thanh toán'}</Text>
-
+            <Text style={styles.orderText}>
+                Trạng thái thanh toán: {item.status ? 'Đã thanh toán' : 'Chưa thanh toán'}
+            </Text>
             <TouchableOpacity
                 style={styles.viewDetailsButton}
-                onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
+                onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
             >
-                <Text style={styles.buttonText}>Xem chi tiết</Text>
+                <Text style={{fontWeight:'bold'}}>Xem chi tiết</Text>
             </TouchableOpacity>
         </View>
     );
@@ -51,7 +53,7 @@ function Order({ navigation }) {
                 data={orders}
                 renderItem={renderItem}
                 showsVerticalScrollIndicator={false}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item.id}
             />
         </View>
     );
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     orderItem: {
-        backgroundColor: '#fff',
+        backgroundColor: 'pink',
         padding: 16,
         marginBottom: 16,
         borderRadius: 8,
@@ -83,18 +85,21 @@ const styles = StyleSheet.create({
         color: '#333',
         marginBottom: 8,
     },
-    viewDetailsButton: {
-        backgroundColor: '#007BFF',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        alignItems: 'center',
+    productList: {
         marginTop: 12,
+        paddingLeft: 10,
     },
-    buttonText: {
-        color: '#fff',
+    productHeader: {
         fontSize: 16,
         fontWeight: 'bold',
+        marginBottom: 8,
+    },
+    productItem: {
+        marginBottom: 4,
+    },
+    productText: {
+        fontSize: 14,
+        color: '#555',
     },
 });
 

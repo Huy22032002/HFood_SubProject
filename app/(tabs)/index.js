@@ -12,6 +12,7 @@ import AddCategory from './AddCategory';
 import AddFood from './AddFood';
 import Order from './Order'
 import AppProvider from './AppProvider';
+import OrderDetail from './OrderDetail'
 const Stack = createNativeStackNavigator();
 
 function Index() {
@@ -29,6 +30,7 @@ function Index() {
         <Stack.Screen name="AddCategory" component={AddCategory} />
         <Stack.Screen name='AddFood' component={AddFood}/>
         <Stack.Screen name='Order' component={Order} />
+        <Stack.Screen name="OrderDetail" component={OrderDetail} />
       </Stack.Navigator>
     </AppProvider>
     //</NavigationContainer>

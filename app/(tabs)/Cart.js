@@ -74,9 +74,9 @@ function Cart({ navigation }) {
             console.log('Order saved successfully with ID:', docRef.id);
             alert('Đặt hàng thành công!');
 
-            navigation.navigate('OrderStatus', { orderId: docRef.id });
-            
-            clearCart(); //lam sach gio hang
+            navigation.navigate('Order', { orderId: docRef.id });
+
+            //clearCart(); 
         } catch (error) {
             console.error('Error saving order:', error.message);
             alert('Đặt hàng thất bại!');
