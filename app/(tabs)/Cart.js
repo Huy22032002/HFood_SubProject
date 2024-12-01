@@ -5,7 +5,7 @@ import { useCart } from './CartContext';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 function Cart({ navigation }) {
-    const { cartItems, updateCartItem, removeFromCart } = useCart(); // Assuming these methods exist in CartContext
+    const { cartItems, updateCartItem, removeFromCart } = useCart(); 
 
     const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 

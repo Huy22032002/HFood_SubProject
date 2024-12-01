@@ -1,44 +1,43 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useUser } from './UserContext';
 
 function UserProfile({ navigation }) {
 
     const handleUpdate = () => {
-        // Logic to update user profile
         alert('Thông tin đã được cập nhật');
     };
+    const { user } = useUser();
+
+    const [image, setImage] = useState(user?.image || '');
+    const [name, setName] = useState(user?.name || '');
+    const [age, setAge] = useState(user?.age || '');
+    const [address, setAddress] = useState(user?.address || '');
+    const [phone, setPhone] = useState(user?.phone || '');
 
     return (
         <View style={styles.container}>
             <Text style={styles.header}>Thông tin cá nhân</Text>
-            <View style={styles.infoContainer}>
-                <Text style={styles.label}>Tên:</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Nhập tên của bạn"
-                />
-            </View>
-            <View style={styles.infoContainer}>
-                <Text style={styles.label}>Email:</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Nhập email của bạn"
-                />
-            </View>
-            <View style={styles.infoContainer}>
-                <Text style={styles.label}>Địa chỉ:</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Nhập địa chỉ của bạn"
-                />
-            </View>
-            <View style={styles.infoContainer}>
-                <Text style={styles.label}>SĐT:</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Nhập sđt của bạn"
-                />
-            </View>
+                <View style={{ flexDirection: 'row' }}>
+                <Image source={{ uri: image }} style={{ with: 100, height: 100 }} />
+                </View>    
+                <View style={{flexDirection:'row'}}>
+                    <Text style={styles.label}>Tên: </Text>
+                    <Text style={styles.txtInfo}>{name}</Text>
+                </View>
+                 <View style={{ flexDirection: 'row' }}>
+                    <Text style={styles.label}>Tuổi: </Text>
+                <Text style={styles.txtInfo}>{age}</Text>
+                </View>
+                <View style={{ flexDirection: 'row' }}>
+                    <Text style={styles.label}>Địa chỉ: </Text>
+                <Text style={styles.txtInfo}>{address}</Text>
+                </View>
+                <View style={{ flexDirection: 'row' }}>
+                    <Text style={styles.label}>Số điện thoại: </Text>
+                <Text style={styles.txtInfo}>{phone}</Text>
+                </View>
+                    
             <TouchableOpacity
                 style={styles.updateButton}
                 onPress={handleUpdate}
@@ -68,27 +67,14 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         textAlign: 'center',
     },
-    infoContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-    },
     label: {
         fontSize: 16,
         fontWeight: '600',
         color: '#555',
     },
-    input: {
-        flex: 1,
-        height: 40,
-        borderColor: '#ddd',
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingLeft: 10,
+    txtInfo: {
         fontSize: 16,
-        marginLeft: 10,
+        fontWeight:'bold'
     },
     updateButton: {
         backgroundColor: '#007bff',
