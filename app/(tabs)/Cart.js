@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
+import { useCart } from './CartContext';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
 function Cart({ navigation }) {
-    const [cartItems, setCartItems] = useState([
-        { id: '1', name: 'Product A', price: 100, quantity: 2, image: 'https://via.placeholder.com/100' },
-        { id: '2', name: 'Product B', price: 150, quantity: 1, image: 'https://via.placeholder.com/100' },
-        { id: '3', name: 'Product C', price: 200, quantity: 3, image: 'https://via.placeholder.com/100' },
-    ]);
+    const { cartItems, updateCartItem, removeFromCart } = useCart(); // Assuming these methods exist in CartContext
 
-    const totalPrice = cartItems.reduce((sum,item)=> sum + item.price * item.quantity, 0 );
+    const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const handleIncreaseQuantity = (item) => {
+        updateCartItem(item.id, item.quantity + 1);
+    };
+
+    const handleDecreaseQuantity = (item) => {
+        if (item.quantity > 1) {
+            updateCartItem(item.id, item.quantity - 1);
+        }
+    };
+
+    const handleRemoveItem = (item) => {
+        removeFromCart(item.id);
+    };
 
     const renderItem = ({ item }) => (
         <View style={styles.itemFlatList}>
@@ -18,35 +31,65 @@ function Cart({ navigation }) {
                 <Text style={styles.itemPrice}>Price: ${item.price}</Text>
                 <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
             </View>
-            <TouchableOpacity><Text>+</Text></TouchableOpacity>
-            <TouchableOpacity><Text>-</Text></TouchableOpacity>
-            <TouchableOpacity><Text>Xoá</Text></TouchableOpacity>
-
+            <View style={styles.actions}>
+                <TouchableOpacity onPress={() => handleIncreaseQuantity(item)}>
+                    <Text style={styles.actionText}>+</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDecreaseQuantity(item)}>
+                    <Text style={styles.actionText}>-</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleRemoveItem(item)}>
+                    <Text style={styles.actionText}>Delete</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
+    const handlePurchase = async () => {
+        const order = {
+            createAt: new Date().toISOString(),
+            list_products: cartItems.map((item) => ({
+                product_id: `/Product/${item.id}`,
+                quantity: item.quantity,
+                total: item.price * item.quantity,
+            })),
+            total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+            status: true,
+            user_id: `/User/user1`,
+        };
 
+        try {
+            // Lưu đơn hàng vào bộ sưu tập 'orders' trong Firestore
+            const docRef = await addDoc(collection(db, 'order'), order);
+            console.log('Order saved successfully with ID:', docRef.id);
+            alert('Đặt hàng thành công!');
+        } catch (error) {
+            console.error('Error saving order:', error.message);
+            alert('Đặt hàng thất bại!');
+        }
+    };
     return (
         <View style={styles.container}>
-            <Text>Khách hàng: </Text>
-            <Text>sđt: </Text>
-            <Text>Địa chỉ: </Text>
-
+            <Text>Customer: </Text>
+            <Text>Phone: </Text>
+            <Text>Address: </Text>
 
             <FlatList
                 data={cartItems}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => item.id ? item.id.toString() : String(item)}
                 style={styles.cartList}
                 showsVerticalScrollIndicator={false}
             />
 
-            <TouchableOpacity><Text style={styles.txtMaGiamGia}>Xem Mã Giảm Giá khả dụng</Text></TouchableOpacity>
+            <TouchableOpacity>
+                <Text style={styles.txtMaGiamGia}>Xem Mã Giảm Giá khả dụng</Text>
+            </TouchableOpacity>
 
             <View style={styles.totalContainer}>
-                <Text style={styles.txtTotalPrice}>Total: ${totalPrice}</Text>
+                <Text style={styles.txtTotalPrice}>Total: ${totalPrice.toFixed(2)}</Text>
             </View>
 
-            <TouchableOpacity style={styles.btnOrder} onPress={() => alert('buy')}>
+            <TouchableOpacity style={styles.btnOrder} onPress={handlePurchase}>
                 <Text style={styles.txtBtnOrder}>BUY</Text>
             </TouchableOpacity>
         </View>
@@ -69,16 +112,17 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowOffset: { width: 0, height: 1 },
         shadowRadius: 5,
-        alignItems:'center',
-        justifyContent: 'space-between'
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
-    itemImg: {
+    itemImage: {
         width: 80,
         height: 80,
         borderRadius: 8,
         marginRight: 16,
     },
     itemDetails: {
+        flex: 1,
         justifyContent: 'center',
     },
     itemName: {
@@ -92,6 +136,16 @@ const styles = StyleSheet.create({
     itemQuantity: {
         fontSize: 14,
         color: '#555',
+    },
+    actions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    actionText: {
+        fontSize: 18,
+        marginHorizontal: 8,
+        color: 'red',
+        fontWeight:'bold'
     },
     totalContainer: {
         paddingVertical: 16,
@@ -114,9 +168,9 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
-    txtMaGiamGia:{
-        color:'red'
-    }
+    txtMaGiamGia: {
+        color: 'red',
+    },
 });
 
 export default Cart;

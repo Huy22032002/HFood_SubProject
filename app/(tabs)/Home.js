@@ -1,33 +1,59 @@
-import React, { useState } from 'react';  
+import { initializeApp } from "firebase/app";
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, TextInput, Image } from 'react-native';
-import axios from 'axios';
+import { db } from '../../config/firebaseConfig'; 
+import { getFirestore, getDocs, collection } from "firebase/firestore";
 
-const Home = ({ navigation }) => {
-    const categories = [
-        { id: '1', name: 'Pizza', image : require('../../assets/images/category.png') },
-        { id: '2', name: 'Burgers', image: require('../../assets/images/category.png') },
-        { id: '3', name: 'Drinks', image: require('../../assets/images/category.png') },
-        { id: '4', name: 'JunkFood', image: require('../../assets/images/category.png') },
-        { id: '5', name: 'Bread', image: require('../../assets/images/category.png') },
-        { id: '6', name: 'Noodles', image: require('../../assets/images/category.png') },
-    ];
 
-    //fetch food
+const Home = ({ route, navigation }) => {
+    // Fetch Categories
+    const [categories, setCategories] = useState([]);
+    //fetch Products
     const [foods, setFoods] = useState([]);
-    const fetchAPIFood = async () => {
+
+    const fetchCategories = async () => {
         try {
-            const response = await axios.get("https://6707200ca0e04071d2292c11.mockapi.io/Food");
-            setFoods(response.data);
+            // Lấy tất cả các tài liệu trong bộ sưu tập "Categories"
+            const querySnapshot = await getDocs(collection(db, "Categories"));
+
+            const categoriesData = querySnapshot.docs.map((doc) => {
+                // Lấy dữ liệu từ mỗi tài liệu
+                const data = doc.data();
+                return {
+                    id: doc.id,  // Lấy ID của tài liệu
+                    image: data.image,
+                    name: data.name,
+                };
+            });
+
+            console.log("Fetched Categories: ", categoriesData);
+            setCategories(categoriesData);  // Lưu vào state
         } catch (error) {
-            if (error.response && error.response.status === 429) {
-                console.log("limit...");
-                setTimeout(fetchAPIFood, 5000); 
-            } else {
-                console.error("API Error: ", error);
-            }
+            console.error("Error fetching categories: ", error);
         }
     };
-    fetchAPIFood();
+    const fetchProducts = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "Product"));
+            const productsData = querySnapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    image: data.image,
+                    name: data.name,
+                    price: data.price,
+                };
+            });
+            setFoods(productsData);
+        } catch (error) {
+            console.error("Error fetching products: ", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchCategories();
+        fetchProducts();
+    }, []);
 
     const [popUp, setPopUp] = useState(false);
     const activePopUp = () => {
@@ -35,9 +61,9 @@ const Home = ({ navigation }) => {
     };
 
     const renderCategoryItem = ({ item }) => (
-        <TouchableOpacity style={{justifyContent:'center', alignItems:'center', marginRight:30}}>
-            <Image source={item.image}  style={{width:70, height:70, borderRadius:40}}/>
-            <Text style={{fontWeight:'bold'}}>{item.name}</Text>
+        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', marginRight: 30 }}>
+            <Image source={{ uri: item.image }} style={{ width: 70, height: 70, borderRadius: 40 }} />
+            <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
         </TouchableOpacity>
     );
 
@@ -46,19 +72,36 @@ const Home = ({ navigation }) => {
             style={styles.productItem}
             onPress={() => navigation.navigate('FoodDetail', { id: item.id })}
         >
-            <View style={{flexDirection:'row', alignItems:'center', justifyContent:'space-around'}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
                 <View>
-                    <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                    <Text style={{color:'gray', fontWeight:'bold'}}>${item.price}</Text>
+                    <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
+                    <Text style={{ color: 'gray', fontWeight: 'bold' }}>${item.price}</Text>
                 </View>
-                <Image source={item.image} style={{width:100, height:100, borderRadius:10}} />
+                <Image source={{ uri: item.image }} style={{ width: 100, height: 100, borderRadius: 10 }} />
             </View>
         </TouchableOpacity>
     );
 
     return (
         <View style={styles.container}>
+            {/* Header and Modal */}
             <View style={styles.headerUser}>
+                <TouchableOpacity
+                    style={{ marginRight: 15 }}
+                    onPress={() => navigation.navigate('AddFood')}>
+                    <Image
+                        source={require('../../assets/images/addFood.png')}
+                        style={styles.icon}
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={{ marginRight: 15 }}
+                    onPress={() => navigation.navigate('AddCategory')}>
+                    <Image
+                        source={require('../../assets/images/category.jpg')}
+                        style={styles.icon}
+                    />
+                </TouchableOpacity>
                 <TouchableOpacity
                     style={{ marginRight: 15 }}
                     onPress={() => navigation.navigate('Cart')}>
@@ -90,9 +133,7 @@ const Home = ({ navigation }) => {
             </Modal>
 
             <View style={styles.headerSearch}>
-                <TextInput placeholder="Search foods here..." style={styles.searchInput} 
-                      
-                 />
+                <TextInput placeholder="Search foods here..." style={styles.searchInput} />
             </View>
 
             <View style={styles.bannerContainer}>
@@ -105,14 +146,14 @@ const Home = ({ navigation }) => {
                 renderItem={renderCategoryItem}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={{ justifyContent: 'space-around', flex: 1 }}
-                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
             />
 
             <FlatList
                 data={foods}
                 renderItem={renderProductItem}
                 keyExtractor={(item) => item.id}
-                style={{flex:100}}
+                style={{ flex: 100 }}
                 numColumns={2}
                 showsVerticalScrollIndicator={false}
             />
@@ -191,19 +232,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         padding: 15,
         borderRadius: 10,
-        margin: 10,  // Adds space between product items
+        margin: 10,
         width: '45%',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOffset: { width: 5, height: 2 },
+        shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
-    },
-    orderButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
+    }
 });
-
 
 export default Home;

@@ -1,71 +1,133 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList } from 'react-native';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
+import { useCart } from './CartContext';
 
-const FoodDetail = ({ route, navigation }) => {
-    const { id } = route.params;  
+const FoodDetail = ({ route }) => {
+    const { id } = route.params;
+    const [foodDetail, setFoodDetail] = useState(null);
+    const [categoryName, setCategoryName] = useState('');
+    const [comments, setComments] = useState([]);
+    const [users, setUsers] = useState({});
+    const { cartItems, setCartItems } = useCart();
 
-    const [quantity, setQuantity] = useState(1);
+    const addToCart = (item) => {
+        alert("Sản phẩm thêm vào: " + id); // Dùng alert để hiển thị sản phẩm
 
-    const [foodDetail, setFoodDetail] = useState(null); 
-    const [loading, setLoading] = useState(true);  
+        setCartItems((prevItems) => {
+            const existingItem = prevItems.find((cartItem) => cartItem.id === item.id);
 
-    // Fetch detail
+            if (existingItem) {
+                alert('Sản phẩm này đã có trong giỏ hàng!');
+                return prevItems;
+            } else {
+                const updatedCart = [...prevItems, { ...item, quantity: 1 }];
+                return updatedCart;
+            }
+        });
+    };
+
     useEffect(() => {
-        axios.get(`https://6707200ca0e04071d2292c11.mockapi.io/Food/${id}`)
-            .then((response) => {
-                setFoodDetail(response.data);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error(error);
-                setLoading(false);
-            });
+        const fetchFoodDetail = async () => {
+            try {
+                const docRef = doc(db, "Product", id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const foodData = docSnap.data();
+                    setFoodDetail({...foodData, id: id});
+
+                    if (foodData.category && foodData.category.id) {
+                        const categoryRef = doc(db, "Categories", foodData.category.id);
+                        const categoryDocSnap = await getDoc(categoryRef);
+                        if (categoryDocSnap.exists()) {
+                            setCategoryName(categoryDocSnap.data().name);
+                        }
+                    }
+
+                    if (foodData.reviews) {
+                        setComments(foodData.reviews);
+                    }
+                } else {
+                    console.log("No such document!");
+                }
+            } catch (error) {
+                console.error("Error fetching product details: ", error);
+            }
+        };
+
+        fetchFoodDetail();
     }, [id]);
 
-    if (loading) {
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const userPromises = comments.map(async (review) => {
+                    const userRef = doc(db, "User", review.user_id);
+                    const userDocSnap = await getDoc(userRef);
+                    if (userDocSnap.exists()) {
+                        return { user_id: review.user_id, user_name: userDocSnap.data().name };
+                    }
+                    return null;
+                });
+
+                const userData = await Promise.all(userPromises);
+                const userMap = {};
+                userData.forEach((user) => {
+                    if (user) {
+                        userMap[user.user_id] = user.user_name;
+                    }
+                });
+
+                setUsers(userMap);
+            } catch (error) {
+                console.error("Error fetching user data: ", error);
+            }
+        };
+
+        if (comments.length > 0) {
+            fetchUsers();
+        }
+    }, [comments]);
+
+    if (!foodDetail) {
         return (
             <View style={styles.container}>
                 <Text>Loading...</Text>
             </View>
         );
     }
-    const renderComment = ({ item }) => (
-        <View style={styles.commentItem}>
-            <Text style={styles.commentUser}>User {item.user_id}:</Text>
-            <Text style={styles.commentContent}>{item.content}</Text>
+
+    const renderCommentItem = ({ item }) => (
+        <View style={styles.commentContainer}>
+            <Text style={styles.commentUserId}>User: {users[item.user_id]}</Text>
+            <Text style={styles.commentText}>{item.comment}</Text>
         </View>
     );
 
     return (
         <View style={styles.container}>
-            <Image source={foodDetail.image} style={styles.foodImage} />
-       
-            <Text style={styles.foodName}>{foodDetail.name} ({foodDetail.category})</Text>
-            <Text style={styles.foodDescription}>Description: {foodDetail.des}</Text>
-            <Text style={styles.foodPrice}>Price: ${foodDetail.price}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-                <TouchableOpacity onPress={() => setQuantity(Math.max(1, quantity - 1))}>
-                    <Text style={{padding:10, backgroundColor:'gray', borderRadius:10}}>-</Text>
-                </TouchableOpacity>
-                <Text style={{ marginHorizontal: 10, fontWeight:'bold' }}>{quantity}</Text>
-                <TouchableOpacity onPress={() => setQuantity(quantity + 1)}>
-                    <Text style={{ padding: 10, backgroundColor: 'gray', borderRadius: 10 }}>+</Text>
-                </TouchableOpacity>
-            </View>
-            <Text style={{fontWeight:'bold', fontSize:17}}>Review</Text>
-            <Image source={require('../../assets/images/rate.jpg')} style={{marginBottom:10,width:120, height:20}} />
+            <Image source={{ uri: foodDetail.image }} style={styles.foodImage} />
+            <Text style={styles.foodName}>{foodDetail.name}</Text>
+            <Text>{categoryName}</Text>
+            <Text style={styles.foodPrice}>${foodDetail.price}</Text>
+            <Text style={styles.foodDescription}>{foodDetail.description}</Text>
+
+            <Text style={styles.commentsHeader}>Review From Customers:</Text>
             <FlatList
-                data={foodDetail.comment}
+                data={comments}
+                renderItem={renderCommentItem}
                 keyExtractor={(item, index) => index.toString()}
-                renderItem={renderComment}
+                style={styles.commentsList}
                 showsVerticalScrollIndicator={false}
             />
+
             <TouchableOpacity
-                style={styles.orderButton}
-                onPress={() => alert('Add To Cart')}
+                onPress={() => addToCart(foodDetail)}
+                style={styles.addToCartButton}
             >
-                <Text style={styles.orderButtonText}>Add To Cart</Text>
+                <Text style={styles.addToCartText}>Add To Cart</Text>
             </TouchableOpacity>
         </View>
     );
@@ -79,43 +141,56 @@ const styles = StyleSheet.create({
     },
     foodImage: {
         width: '100%',
-        height: 250,
+        height: 300,
         borderRadius: 10,
         marginBottom: 20,
     },
     foodName: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 10,
-    },
-    foodDescription: {
-        fontSize: 16,
-        color: '#777',
-        marginBottom: 20,
     },
     foodPrice: {
         fontSize: 20,
-        fontWeight: '600',
+        color: '#FF5733',
+        marginVertical: 10,
+    },
+    foodDescription: {
+        fontSize: 16,
         color: '#333',
-        marginBottom: 30,
+        marginBottom: 20,
     },
-    orderButton: {
-        backgroundColor: '#FF5733',
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
-    },
-    orderButtonText: {
-        color: '#fff',
+    commentsHeader: {
+        fontSize: 18,
         fontWeight: 'bold',
+        marginBottom: 10,
     },
-    commentItem: {
-        backgroundColor: '#f1f1f1',
+    commentContainer: {
+        backgroundColor: '#e9ecef',
         padding: 10,
-        marginVertical: 5,
+        marginBottom: 10,
         borderRadius: 5,
-    }
+    },
+    commentUserId: {
+        fontWeight: 'bold',
+        color: '#007bff',
+    },
+    commentText: {
+        marginTop: 5,
+        fontSize: 14,
+        color: '#333',
+    },
+    addToCartButton: {
+        borderRadius: 20,
+        backgroundColor: 'red',
+        padding: 10,
+        marginTop: 20,
+    },
+    addToCartText: {
+        fontSize: 17,
+        fontWeight: 'bold',
+        color: 'white',
+        textAlign: 'center',
+    },
 });
 
 export default FoodDetail;
