@@ -59,7 +59,7 @@ function Login({ navigation }) {
             />
             <Button
                 title={loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-                color="#005f99"
+                color="#355F2E"
                 onPress={handleLogin}
                 disabled={loading}
             />
@@ -78,13 +78,13 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#e0f7fa',
+        backgroundColor: '#F4E0AF',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
-        color: '#005f99',
+        color: '#355F2E',
         textAlign: 'center',
     },
     input: {
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     txt: {
-        color: '#005f99',
+        color: 'red',
         marginTop: 10,
         textAlign: 'center',
     },

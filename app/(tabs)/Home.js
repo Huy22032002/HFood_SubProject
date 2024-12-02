@@ -1,8 +1,7 @@
-import { initializeApp } from "firebase/app";
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, TextInput, Image } from 'react-native';
-import { db } from '../../config/firebaseConfig'; 
-import { getFirestore, getDocs, collection } from "firebase/firestore";
+import { db } from '../../config/firebaseConfig';
+import { getDocs, collection, query, where } from "firebase/firestore";
 import { useUser } from './UserContext';
 
 const Home = ({ navigation }) => {
@@ -13,52 +12,57 @@ const Home = ({ navigation }) => {
     const fetchCategories = async () => {
         try {
             const querySnapshot = await getDocs(collection(db, "Categories"));
-
-            const categoriesData = querySnapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    id: doc.id,  
-                    image: data.image,
-                    name: data.name,
-                };
-            });
-
-            console.log("Fetched Categories: ", categoriesData);
-            setCategories(categoriesData);  
+            const categoriesData = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setCategories(categoriesData);
         } catch (error) {
             console.error("Error fetching categories: ", error);
         }
     };
-    const fetchProducts = async () => {
+
+    const fetchAllProducts = async () => {
         try {
             const querySnapshot = await getDocs(collection(db, "Product"));
-            const productsData = querySnapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    image: data.image,
-                    name: data.name,
-                    price: data.price,
-                };
-            });
+            const productsData = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
             setFoods(productsData);
         } catch (error) {
-            console.error("Error fetching products: ", error);
+            console.error("Error fetching all products: ", error);
+        }
+    };
+
+    const fetchFilteredProducts = async (categoryId) => {
+        try {
+            const querySnapshot = await getDocs(
+                query(collection(db, "Product"), where("category", "==", categoryId))
+            );
+            const filteredProducts = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setFoods(filteredProducts);
+        } catch (error) {
+            console.error("Error fetching filtered products: ", error);
         }
     };
 
     useEffect(() => {
         fetchCategories();
-        fetchProducts();
+        fetchAllProducts(); // Chỉ gọi một lần khi component mount
     }, []);
 
     const [popUp, setPopUp] = useState(false);
-    const activePopUp = () => {
-        setPopUp(!popUp);
-    };
+    const activePopUp = () => setPopUp(!popUp);
 
     const renderCategoryItem = ({ item }) => (
-        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', marginRight: 30 }}>
+        <TouchableOpacity
+            style={{ justifyContent: 'center', alignItems: 'center', marginRight: 30 }}
+            onPress={() => fetchFilteredProducts(item.id)} // Gọi fetchFilteredProducts
+        >
             <Image source={{ uri: item.image }} style={{ width: 70, height: 70, borderRadius: 40 }} />
             <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
         </TouchableOpacity>
@@ -69,12 +73,12 @@ const Home = ({ navigation }) => {
             style={styles.productItem}
             onPress={() => navigation.navigate('FoodDetail', { id: item.id })}
         >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
-                <View>
-                    <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
-                    <Text style={{ color: 'gray', fontWeight: 'bold' }}>${item.price}</Text>
+            <View style={styles.productContent}>
+                <View style={styles.productText}>
+                    <Text style={styles.productName}>{item.name}</Text>
+                    <Text style={styles.productPrice}>${item.price}</Text>
                 </View>
-                <Image source={{ uri: item.image }} style={{ width: 100, height: 100, borderRadius: 10 }} />
+                <Image source={{ uri: item.image }} style={styles.productImage} />
             </View>
         </TouchableOpacity>
     );
@@ -90,52 +94,54 @@ const Home = ({ navigation }) => {
                             style={{ marginRight: 15 }}
                             onPress={() => navigation.navigate('AddFood')}
                         >
-                            <Image
-                                source={require('../../assets/images/addFood.png')}
-                                style={styles.icon}
-                            />
+                            <Image source={require('../../assets/images/add.png')} style={styles.icon} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={{ marginRight: 15 }}
                             onPress={() => navigation.navigate('AddCategory')}
                         >
-                            <Image
-                                source={require('../../assets/images/category.jpg')}
-                                style={styles.icon}
-                            />
+                            <Image source={require('../../assets/images/category.png')} style={styles.icon} />
                         </TouchableOpacity>
                     </>
                 )}
                 <TouchableOpacity
                     style={{ marginRight: 15 }}
-                    onPress={() => navigation.navigate('Order')}>
-                    <Image
-                        source={require('../../assets/images/transaction-history.png')}
-                        style={styles.icon}
-                    />
+                    onPress={() => navigation.navigate('Order')}
+                >
+                    <Image source={require('../../assets/images/transaction-history.png')} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={{ marginRight: 15 }}
-                    onPress={() => navigation.navigate('Cart')}>
-                    <Image
-                        source={require('../../assets/images/cart.png')}
-                        style={styles.icon}
-                    />
+                    onPress={() => navigation.navigate('Cart')}
+                >
+                    <Image source={require('../../assets/images/carrt.png')} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={activePopUp}>
                     <Image
                         source={userImage}
-                        style={styles.icon}
+                        style={{ width: 40, height: 40, borderRadius: 20 }}
                     />
                 </TouchableOpacity>
             </View>
 
-            <Modal visible={popUp} transparent animationType="slide">
+            <Modal visible={popUp} transparent animationType="fade">
                 <View style={styles.modalContainer}>
-                    <TouchableOpacity style={styles.modalButton} onPress={() => navigation.navigate("UserProfile")}>
+                    <TouchableOpacity
+                        style={styles.modalButton}
+                        onPress={() => {
+                            setPopUp(false);
+                            navigation.navigate("UserProfile");
+                        }}
+                    >
                         <Text style={styles.modalButtonText}>View Information</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.modalButton} onPress={() => navigation.navigate('Login')}>
+                    <TouchableOpacity
+                        style={styles.modalButton}
+                        onPress={() => {
+                            setPopUp(false);
+                            navigation.navigate('Login');
+                        }}
+                    >
                         <Text style={styles.modalButtonText}>Log Out</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.closeButton} onPress={activePopUp}>
@@ -160,7 +166,12 @@ const Home = ({ navigation }) => {
                 contentContainerStyle={{ justifyContent: 'space-around', flex: 1 }}
                 showsHorizontalScrollIndicator={false}
             />
-
+            <TouchableOpacity
+                style={styles.allProductsButton}
+                onPress={() => fetchAllProducts()} // Gọi fetchAllProducts để reset về tất cả sản phẩm
+            >
+                <Image source={require('../../assets/images/refresh.png')} style={{ width: 30, height: 30 }} />
+            </TouchableOpacity>
             <FlatList
                 data={foods}
                 renderItem={renderProductItem}
@@ -176,7 +187,7 @@ const Home = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#F4E0AF',
         padding: 10,
     },
     headerUser: {
@@ -185,7 +196,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     headerSearch: {
-        backgroundColor: 'white',
+        backgroundColor: '#A8CD89',
         padding: 10,
         borderRadius: 10,
         marginBottom: 15,
@@ -213,8 +224,19 @@ const styles = StyleSheet.create({
         height: 40,
     },
     modalContainer: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        position: 'absolute',
+        top: 120,
+        right: 10,
+        backgroundColor: '#A8CD89',
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 5,
+        padding: 10,
+        width: 150,
+        zIndex: 1000,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -222,13 +244,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffffff',
         padding: 10,
         marginBottom: 10,
-        width: 200,
+        width: 140,
         alignItems: 'center',
         borderRadius: 5,
     },
     modalButtonText: {
         color: '#333',
-        fontSize: 16,
+        fontSize: 14,
     },
     closeButton: {
         backgroundColor: '#FF5733',
@@ -241,7 +263,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
     },
     productItem: {
-        backgroundColor: 'white',
+        backgroundColor: '#A8CD89',
         padding: 15,
         borderRadius: 10,
         margin: 10,
@@ -251,7 +273,36 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
-    }
+    },
+    productContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    productText: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingRight: 10,
+    },
+    productName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    productPrice: {
+        fontSize: 16,
+        color: '#5A5A5A',
+    },
+    productImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 10,
+    },
+    allProductsButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
 });
 
 export default Home;

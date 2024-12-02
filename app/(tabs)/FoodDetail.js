@@ -111,7 +111,7 @@ const FoodDetail = ({ route }) => {
             <Image source={{ uri: foodDetail.image }} style={styles.foodImage} />
             <Text style={styles.foodName}>{foodDetail.name}</Text>
             <Text>{categoryName}</Text>
-            <Text style={styles.foodPrice}>${foodDetail.price}</Text>
+            <Text style={styles.foodPrice}>{foodDetail.price} VNĐ (1 miếng)</Text>
             <Text style={styles.foodDescription}>{foodDetail.description}</Text>
 
             <Text style={styles.commentsHeader}>Review From Customers:</Text>
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#F4E0AF',
     },
     foodImage: {
         width: '100%',
@@ -151,8 +151,9 @@ const styles = StyleSheet.create({
     },
     foodPrice: {
         fontSize: 20,
-        color: '#FF5733',
+        color: '#355F2E',
         marginVertical: 10,
+        fontWeight:'bold'
     },
     foodDescription: {
         fontSize: 16,
@@ -165,14 +166,14 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     commentContainer: {
-        backgroundColor: '#e9ecef',
+        backgroundColor: '#A8CD89',
         padding: 10,
         marginBottom: 10,
-        borderRadius: 5,
+        borderRadius: 10,
     },
     commentUserId: {
         fontWeight: 'bold',
-        color: '#007bff',
+        color: '#355F2E',
     },
     commentText: {
         marginTop: 5,
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     },
     addToCartButton: {
         borderRadius: 20,
-        backgroundColor: 'red',
+        backgroundColor: '#355F2E',
         padding: 10,
         marginTop: 20,
     },

@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#F4E0AF',
         justifyContent: 'center',
     },
     headerText: {
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: 30,
-        color: '#333',
+        color: '#355F2E',
     },
     input: {
         borderBottomWidth: 1,
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     signUpButton: {
-        backgroundColor: '#FF5733',
+        backgroundColor: '#355F2E',
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',
@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
     loginText: {
         marginTop: 15,
         textAlign: 'center',
-        color: '#007bff',
-        fontSize: 14,
+        color: 'red',
+        fontSize: 15,
     },
 });
 

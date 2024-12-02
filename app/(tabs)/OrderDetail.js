@@ -69,7 +69,6 @@ function OrderDetail({ route }) {
             return;
         }
 
-        // Cập nhật reviews cho sản phẩm
         const updatedReviews = [...(product.reviews || [])];
         updatedReviews.push({
             user_id: user.userId, 
@@ -77,7 +76,7 @@ function OrderDetail({ route }) {
         });
 
         try {
-            const productRef = doc(db, 'Product', productIdCleaned);  // Sử dụng productId đã được loại bỏ /Product/
+            const productRef = doc(db, 'Product', productIdCleaned);  
             await updateDoc(productRef, {
                 reviews: updatedReviews, // Cập nhật field reviews
             });
@@ -102,9 +101,11 @@ function OrderDetail({ route }) {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Chi tiết đơn hàng #{order.id}</Text>
-            <Text style={styles.infoText}>Ngày đặt hàng: {order.createAt}</Text>
+            <Text style={styles.infoText}>
+                Ngày đặt hàng: {order.createAt?.toDate().toLocaleString('vi-VN') || 'N/A'}
+            </Text>
             <Text style={styles.infoText}>Địa chỉ giao hàng: {order.address}</Text>
-            <Text style={styles.infoText}>Tổng tiền: {order.total} đ</Text>
+            <Text style={styles.infoText}>Tổng tiền: {order.total} VNĐ</Text>
             <Text style={styles.infoText}>
                 Trạng thái thanh toán: {order.status ? 'Đã thanh toán' : 'Chưa thanh toán'}
             </Text>
@@ -118,13 +119,13 @@ function OrderDetail({ route }) {
                     <View style={styles.productItem}>
                         <Image
                             source={{ uri: item.image }}
-                            style={{ width: 70, height: 70 }}
+                            style={{ width: 70, height: 70, borderRadius:20 }}
                             resizeMode="cover"
                         />
                         <View style={styles.productDetails}>
                             <Text style={styles.productName}>{item.name}</Text>
                             <Text style={styles.productQuantity}>Số lượng: {item.quantity}</Text>
-                            <Text style={styles.productTotal}>Tổng: {item.total} đ</Text>
+                            <Text style={styles.productTotal}>Tổng: {item.total} VNĐ</Text>
 
                             {/* Hiển thị phần đánh giá nếu đang chọn sản phẩm */}
                             {selectedProductId === item.product_id ? (
@@ -138,12 +139,14 @@ function OrderDetail({ route }) {
                                     <Button
                                         title="Gửi đánh giá"
                                         onPress={() => handleSubmitReview(item.product_id)}
+                                        color="#355F2E"
                                     />
                                 </View>
                             ) : (
                                 <Button
                                     title="Đánh giá"
                                     onPress={() => setSelectedProductId(item.product_id)}
+                                        color="#355F2E" 
                                 />
                             )}
                         </View>
@@ -157,13 +160,14 @@ function OrderDetail({ route }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#F4E0AF',
         padding: 16,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
+        color:'#355F2E'
     },
     infoText: {
         fontSize: 16,
@@ -178,7 +182,7 @@ const styles = StyleSheet.create({
     },
     productItem: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: '#A8CD89',
         padding: 12,
         borderRadius: 8,
         marginBottom: 8,

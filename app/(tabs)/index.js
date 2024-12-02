@@ -20,8 +20,8 @@ function Index() {
     //<NavigationContainer>
     <AppProvider>
       <Stack.Navigator>
+        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={Home}/>
-        <Stack.Screen name="Login" component={LoginScreen}/>
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="UserProfile" component={UserProfile} />

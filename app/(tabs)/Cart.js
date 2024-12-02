@@ -4,10 +4,11 @@ import { useUser } from './UserContext';
 import { useCart } from './CartContext';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
+import { Timestamp } from "firebase/firestore";
+
 function Cart({ navigation }) {
     const [address, setAddress] = useState('');
-    const { cartItems, updateCartItem, removeFromCart } = useCart(''); 
-
+    const { cartItems, updateCartItem, removeFromCart } = useCart();
     const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     const handleIncreaseQuantity = (item) => {
@@ -25,94 +26,88 @@ function Cart({ navigation }) {
     };
 
     const { user } = useUser();
-    const username = user?.name || "";
-    const phone = user?.phone || "";
-    const userAddress = user?.address || "";
+    const username = user?.name || "Khách hàng";
+    const phone = user?.phone || "Không có số điện thoại";
+    const userAddress = user?.address || "Không có địa chỉ";
 
-    const renderItem = ({ item }) => (
-        <View style={styles.itemFlatList}>
-            <Image source={{ uri: item.image }} style={styles.itemImage} />
-            <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemPrice}>Price: ${item.price}</Text>
-                <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
-            </View>
-            <View style={styles.actions}>
-                <TouchableOpacity onPress={() => handleIncreaseQuantity(item)}>
-                    <Text style={styles.actionText}>+</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDecreaseQuantity(item)}>
-                    <Text style={styles.actionText}>-</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleRemoveItem(item)}>
-                    <Text style={styles.actionText}>Delete</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
     const deliveryAddress = address.trim() !== '' ? address : userAddress;
+
     const handlePurchase = async () => {
         if (cartItems.length === 0) {
             alert('Giỏ hàng của bạn không có sản phẩm. Vui lòng thêm sản phẩm vào giỏ hàng!');
             return;
         }
         const order = {
-            createAt: new Date().toISOString(),
+            createAt: Timestamp.fromDate(new Date()),
             list_products: cartItems.map((item) => ({
                 product_id: `/Product/${item.id}`,
                 quantity: item.quantity,
                 total: item.price * item.quantity,
             })),
-            total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+            total: totalPrice,
             status: true,
             user_id: user.userId,
-            address: deliveryAddress
+            address: deliveryAddress,
         };
 
         try {
             const docRef = await addDoc(collection(db, 'order'), order);
-            console.log('Order saved successfully with ID:', docRef.id);
             alert('Đặt hàng thành công!');
-
             navigation.navigate('Order', { orderId: docRef.id });
-
-            //clearCart(); 
         } catch (error) {
-            console.error('Error saving order:', error.message);
             alert('Đặt hàng thất bại!');
         }
     };
+
+    const renderItem = ({ item }) => (
+        <View style={styles.itemContainer}>
+            <Image source={{ uri: item.image }} style={styles.itemImage} />
+            <View style={styles.itemDetails}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.itemPrice}>{item.price.toLocaleString()} VNĐ</Text>
+                <View style={styles.quantityControls}>
+                    <TouchableOpacity onPress={() => handleDecreaseQuantity(item)}>
+                        <Text style={styles.controlButton}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.itemQuantity}>{item.quantity}</Text>
+                    <TouchableOpacity onPress={() => handleIncreaseQuantity(item)}>
+                        <Text style={styles.controlButton}>+</Text>
+                    </TouchableOpacity>
+                </View>
+                <TouchableOpacity onPress={() => handleRemoveItem(item)}>
+                    <Text style={styles.removeButton}>Xoá</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+
     return (
         <View style={styles.container}>
-            <Text>Khách hàng: {username}</Text>
-            <Text>Số điện thoại: {phone}</Text>
-            <Text>Địa chỉ hiện tại: {userAddress}</Text>
-            
-            <Text>Hoặc nhập địa chỉ khác mà bạn muốn giao đơn hàng này: </Text>
-            <TextInput 
-                value={address} 
-                onChangeText={setAddress} 
-                style={{ width: '90%', height: 30, borderWidth:1, borderRadius:10, marginTop:10}}
+            <Text style={styles.header}>Thông tin đơn hàng</Text>
+            <Text style={styles.userInfo}>Khách hàng: {username}</Text>
+            <Text style={styles.userInfo}>Số điện thoại: {phone}</Text>
+            <Text style={styles.userInfo}>Địa chỉ hiện tại: {userAddress}</Text>
+
+            <TextInput
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Nhập địa chỉ giao hàng"
+                style={styles.addressInput}
             />
-               
+
             <FlatList
                 data={cartItems}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.id ? item.id.toString() : String(item)}
-                style={styles.cartList}
-                showsVerticalScrollIndicator={false}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={styles.cartList}
             />
 
-            <TouchableOpacity>
-                <Text style={styles.txtMaGiamGia}>Xem Mã Giảm Giá khả dụng</Text>
-            </TouchableOpacity>
-
             <View style={styles.totalContainer}>
-                <Text style={styles.txtTotalPrice}>Total: ${totalPrice.toFixed(2)}</Text>
+                <Text style={styles.totalText}>Tổng tiền: {totalPrice.toLocaleString()} VNĐ</Text>
             </View>
 
-            <TouchableOpacity style={styles.btnOrder} onPress={handlePurchase}>
-                <Text style={styles.txtBtnOrder}>BUY</Text>
+            <TouchableOpacity style={styles.purchaseButton} onPress={handlePurchase}>
+                <Text style={styles.purchaseButtonText}>Đặt hàng</Text>
             </TouchableOpacity>
         </View>
     );
@@ -121,77 +116,97 @@ function Cart({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f9f9f9',
         padding: 16,
+        backgroundColor: '#FFF8E1',
     },
-    itemFlatList: {
-        flexDirection: 'row',
+    header: {
+        fontSize: 20,
+        fontWeight: 'bold',
         marginBottom: 16,
-        padding: 10,
-        backgroundColor: '#ffffff',
+        color: '#4CAF50',
+    },
+    userInfo: {
+        fontSize: 16,
+        marginBottom: 8,
+        color: '#555',
+    },
+    addressInput: {
+        height: 40,
+        borderColor: '#DDD',
+        borderWidth: 1,
         borderRadius: 8,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 1 },
-        shadowRadius: 5,
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        marginBottom: 16,
+        paddingHorizontal: 10,
+        backgroundColor: '#FFF',
+    },
+    cartList: {
+        marginBottom: 16,
+    },
+    itemContainer: {
+        flexDirection: 'row',
+        padding: 10,
+        marginBottom: 10,
+        backgroundColor: '#E8F5E9',
+        borderRadius: 8,
     },
     itemImage: {
         width: 80,
         height: 80,
         borderRadius: 8,
-        marginRight: 16,
+        marginRight: 10,
     },
     itemDetails: {
         flex: 1,
-        justifyContent: 'center',
     },
     itemName: {
         fontSize: 16,
         fontWeight: 'bold',
+        marginBottom: 4,
     },
     itemPrice: {
         fontSize: 14,
-        color: '#333',
+        marginBottom: 8,
+        color: '#4CAF50',
     },
-    itemQuantity: {
-        fontSize: 14,
-        color: '#555',
-    },
-    actions: {
+    quantityControls: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: 8,
     },
-    actionText: {
-        fontSize: 18,
-        marginHorizontal: 8,
-        color: 'red',
-        fontWeight:'bold'
+    controlButton: {
+        fontSize: 20,
+        marginHorizontal: 10,
+        color: '#4CAF50',
+    },
+    itemQuantity: {
+        fontSize: 16,
+    },
+    removeButton: {
+        fontSize: 14,
+        color: '#F44336',
     },
     totalContainer: {
-        paddingVertical: 16,
+        marginTop: 16,
         borderTopWidth: 1,
-        borderColor: '#ddd',
+        borderTopColor: '#DDD',
+        paddingTop: 16,
     },
-    txtTotalPrice: {
-        fontSize: 20,
+    totalText: {
+        fontSize: 18,
         fontWeight: 'bold',
-        textAlign: 'right',
+        color: '#4CAF50',
     },
-    btnOrder: {
-        backgroundColor: '#007BFF',
-        paddingVertical: 12,
+    purchaseButton: {
+        marginTop: 16,
+        backgroundColor: '#4CAF50',
+        padding: 12,
         borderRadius: 8,
         alignItems: 'center',
     },
-    txtBtnOrder: {
-        color: '#ffffff',
-        fontSize: 18,
+    purchaseButtonText: {
+        fontSize: 16,
+        color: '#FFF',
         fontWeight: 'bold',
-    },
-    txtMaGiamGia: {
-        color: 'red',
     },
 });
 
